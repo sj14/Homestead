@@ -64,15 +64,20 @@ public final class HealthPanel {
         // ---------------------------------------------------------- launcher itself
         p.addHeader("Homestead");
 
-        boolean svc = SetupPanel.serviceEnabled(c);
+        boolean svc = SetupPanel.homeButtonOn(c);
         Panel.Row r1 = p.addRow("Home-button redirect", svc ? "active" : "NOT ACTIVE", null);
         r1.setValueColor(svc ? OK : BAD);
 
         String ovlType = HomeRedirectService.overlayTypeLabel();
-        Panel.Row r2 = p.addRow("Instant home screen",
-                ovlType == null ? (svc ? "ready" : "waiting") : ovlType, null);
-        r2.setValueColor(ovlType == null ? (svc ? OK : WARN)
-                : (HomeRedirectService.overlayIsFree() ? OK : WARN));
+        if (HomeLogService.isUsed()) {
+            Panel.Row r2 = p.addRow("Instant home screen", "not on Fire OS 5", null);
+            r2.setValueColor(WARN);
+        } else {
+            Panel.Row r2 = p.addRow("Instant home screen",
+                    ovlType == null ? (svc ? "ready" : "waiting") : ovlType, null);
+            r2.setValueColor(ovlType == null ? (svc ? OK : WARN)
+                    : (HomeRedirectService.overlayIsFree() ? OK : WARN));
+        }
 
         Panel.Row r3 = p.addRow("App ordering",
                 UsageTracker.size(c) + " apps tracked", null);

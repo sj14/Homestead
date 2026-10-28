@@ -296,7 +296,7 @@ public final class OnboardingPanel {
         actions.addView(space(dp(10)));
         homeContinue = button("Continue", false, new Runnable() { public void run() { next(); } });
         actions.addView(homeContinue);
-        focusTarget = SetupPanel.serviceEnabled(c) ? homeContinue
+        focusTarget = SetupPanel.homeButtonOn(c) ? homeContinue
                 : adbDebuggingOn() ? setup : open;
     }
 
@@ -323,6 +323,7 @@ public final class OnboardingPanel {
         AdbBridge.run(AdbBridge.selfSetupCommands(c, current), new AdbBridge.Callback() {
             public void onDone(boolean ok, String out) {
                 HomeRedirectService.startHomeKeyWatch();
+                HomeLogService.start(c);
                 updateChip();
             }
         });
@@ -434,7 +435,7 @@ public final class OnboardingPanel {
         content.addView(tag("All set"));
         content.addView(margin(title("You're ready."), dp(6), dp(14)));
 
-        boolean svc = SetupPanel.serviceEnabled(c);
+        boolean svc = SetupPanel.homeButtonOn(c);
         boolean tun = Prefs.tunnelEnabled(c) || AdbBridge.isConnected();
         if (wantHome) content.addView(checkItem(svc, svc ? "Home screen - on" : "Home screen - skipped for now"));
         if (wantClean) content.addView(checkItem(tun, tun ? "TV cleanup - ready; choose what to switch off in Debloat" : "TV cleanup - skipped for now"));
@@ -470,7 +471,7 @@ public final class OnboardingPanel {
     private void updateChip() {
         if (chip == null) return;
         int id = current();
-        if (id == HOME && SetupPanel.serviceEnabled(c)) {
+        if (id == HOME && SetupPanel.homeButtonOn(c)) {
             setChip(OK, "On - press Home to try it");
             if (!homeWasOn && homeContinue != null) homeContinue.requestFocus();
             homeWasOn = true;

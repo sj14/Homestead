@@ -48,7 +48,7 @@ public final class CommandsPanel {
                 + "The TV will ask you to allow the connection.");
 
         // ------------------------------------------------------------------ what is missing
-        boolean svc = SetupPanel.serviceEnabled(c);
+        boolean svc = SetupPanel.homeButtonOn(c);
         boolean wss = HealthPanel.canWriteSettings(c);
         boolean logs = HomeKeyWatcher.permitted(c);
 
@@ -56,7 +56,11 @@ public final class CommandsPanel {
 
         Panel.Row a = p.addRow("Home-button redirect", svc ? "done" : "needed", null);
         a.setValueColor(svc ? OK : WARN);
-        if (!svc) {
+        if (!svc && HomeLogService.isUsed()) {
+            p.addNote("Fire OS 5 blocks the accessibility service, so Homestead spots the "
+                    + "Home press in the system log instead:\n\n"
+                    + "adb shell pm grant " + pkg + " android.permission.READ_LOGS");
+        } else if (!svc) {
             p.addNote("Fire OS has no menu for this, so it is switched on over ADB. "
                     + "\"Finish setup automatically\" in Setup does it from the TV, or "
                     + "run:\n\n"

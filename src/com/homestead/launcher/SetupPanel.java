@@ -123,12 +123,15 @@ public final class SetupPanel {
 
         final Runnable refresh = new Runnable() {
             public void run() {
-                boolean svc = serviceEnabled(c);
+                boolean svc = homeButtonOn(c);
                 svcRow.setValue(svc ? "on" : "off");
                 svcRow.setValueColor(svc ? OK : BAD);
 
                 String type = HomeRedirectService.overlayTypeLabel();
-                if (!svc) {
+                if (HomeLogService.isUsed()) {
+                    ovlRow.setValue("not on Fire OS 5");
+                    ovlRow.setValueColor(WARN);
+                } else if (!svc) {
                     ovlRow.setValue("waiting");
                     ovlRow.setValueColor(WARN);
                 } else if (type == null) {
@@ -227,6 +230,7 @@ public final class SetupPanel {
                 AdbBridge.run(AdbBridge.selfSetupCommands(c, current), new AdbBridge.Callback() {
                     public void onDone(boolean ok, String out) {
                         HomeRedirectService.startHomeKeyWatch();
+                        HomeLogService.start(c);
                         logRow.setValue(ok ? "done" : "partly failed");
                         logRow.setValueColor(ok ? OK : WARN);
                         refresh.run();
@@ -333,7 +337,9 @@ public final class SetupPanel {
         return parts[0] + ":" + parts[1] + ":" + parts[2] + ":" + parts[3] + ":...";
     }
 
-    static boolean serviceEnabled(Context c) {
+    /** The accessibility service is on, or on Fire OS 5 HomeLogService can run. */
+    static boolean homeButtonOn(Context c) {
+        if (HomeLogService.isUsed()) return HomeLogService.isOn(c);
         try {
             String s = Settings.Secure.getString(c.getContentResolver(),
                     Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
@@ -351,7 +357,7 @@ public final class SetupPanel {
         final Runnable paint = new Runnable() {
             public void run() {
                 row.setValueColor(WARN);
-                if (!serviceEnabled(c)) {
+                if (!homeButtonOn(c)) {
                     row.setValue("off");
                     row.cell.setEnabled(false);
                 } else if (!HomeRedirectService.canTurnOff()) {

@@ -79,7 +79,7 @@ public final class SettingsPanel {
 
         p.addHeader("System");
 
-        boolean ready = SetupPanel.serviceEnabled(c);
+        boolean ready = SetupPanel.homeButtonOn(c);
         final Panel.Row setup = p.addRow("Setup", ready ? "done"
                 : Prefs.homeOffByUser(c) ? "Home button off" : "not finished", null).opens();
         setup.setValueColor(ready ? 0xFFA7D28F : 0xFFE8C468);

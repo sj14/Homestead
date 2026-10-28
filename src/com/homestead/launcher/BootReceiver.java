@@ -37,6 +37,8 @@ public class BootReceiver extends BroadcastReceiver {
         boolean boot = Intent.ACTION_BOOT_COMPLETED.equals(action);
         boolean updated = Intent.ACTION_MY_PACKAGE_REPLACED.equals(action);
         if (!boot && !updated) return;
+        // Fire OS 5 has no accessibility service to start it, and an update stops it.
+        HomeLogService.start(context);
         if (updated) {
             // Only an update this app started recently; not an adb install from a computer.
             long started = Prefs.updateStarted(context);

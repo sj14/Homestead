@@ -16,6 +16,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -27,6 +28,9 @@ import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Reports Home presses from the system log. The HOME intent is logged as the system acts
@@ -46,6 +50,8 @@ public class HomeKeyWatcher extends Service {
 
     private static final String TAG = "Homestead";
     private static final String PERM = "android.permission.READ_LOGS";
+    /** Android 7 added "epoch"; Fire OS 5 (Android 5.1) only has "time", in local time. */
+    private static final boolean EPOCH = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N;
 
     private volatile Messenger client;
     private volatile boolean running;
@@ -97,7 +103,8 @@ public class HomeKeyWatcher extends Service {
                 // -T 1 follows from the newest line, so there is no backlog to skip.
                 // Android 9 (Fire OS 7) logs activity starts as ActivityManager; Android 10
                 // and later (Fire OS 8) as ActivityTaskManager.
-                proc = new ProcessBuilder("logcat", "-b", "system", "-v", "epoch", "-T", "1",
+                proc = new ProcessBuilder("logcat", "-b", "system",
+                        "-v", EPOCH ? "epoch" : "time", "-T", "1",
                         "ActivityManager:I", "ActivityTaskManager:I", "*:S")
                         .redirectErrorStream(true).start();
                 BufferedReader r = new BufferedReader(
@@ -137,13 +144,27 @@ public class HomeKeyWatcher extends Service {
         while (e < line.length() && Character.isDigit(line.charAt(e))) e++;
         if (e == s) return -1;
         // -T 1 replays the newest line, which may be an old press.
-        try {
-            String t = line.trim();
-            int sp = t.indexOf(' ');
-            long at = (long) (Double.parseDouble(t.substring(0, sp)) * 1000.0);
-            if (at < notBefore) return -1;
-        } catch (Throwable ignored) { }
+        long at = lineTime(line);
+        if (at >= 0 && at < notBefore) return -1;
         try { return Integer.parseInt(line.substring(s, e)); } catch (Throwable t) { return -1; }
+    }
+
+    /** When the line was logged, in ms since the epoch, or -1 if that cannot be read. */
+    private static long lineTime(String line) {
+        String t = line.trim();
+        try {
+            if (EPOCH) {
+                // "1793207323.424 ..."
+                int sp = t.indexOf(' ');
+                return (long) (Double.parseDouble(t.substring(0, sp)) * 1000.0);
+            }
+            // "10-28 18:08:43.740 ...", without the year.
+            String year = new SimpleDateFormat("yyyy", Locale.US).format(new Date());
+            SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
+            return f.parse(year + "-" + t.substring(0, 18)).getTime();
+        } catch (Throwable ignored) {
+            return -1;
+        }
     }
 
     private void send(int uid) {

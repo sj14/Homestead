@@ -72,6 +72,11 @@
              android:process=":homekey"
              android:exported="false"/>
 
+    <!-- Home button on Fire OS 5, which blocks the accessibility service: reacts to the
+         Home presses HomeKeyWatcher reports. -->
+    <service android:name=".HomeLogService"
+             android:exported="false"/>
+
     <!-- Local tunnel to the TV's own adbd where Fire OS blocks self-connections. Opt-in,
          off by default; startable only by this app. See SECURITY.md. -->
     <service android:name=".TunnelVpnService"
