@@ -105,6 +105,8 @@
       <intent-filter android:priority="999">
         <action android:name="android.intent.action.BOOT_COMPLETED"/>
         <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+        <!-- Fire OS 5 only: comes well before BOOT_COMPLETED there. -->
+        <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
       </intent-filter>
     </receiver>
   </application>
